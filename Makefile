@@ -1,11 +1,11 @@
-all: lab0.hex
+all: tic_tac_toe.hex
 
-lab0.elf: lab0.c
-	avr-gcc -mmcu=atmega324a -Os -Wall -o lab0.elf lab0.c
+tic_tac_toe.elf: tic_tac_toe.c
+	avr-gcc -mmcu=atmega324a -Os -Wall -o tic_tac_toe.elf tic_tac_toe.c
 
-lab0.hex: lab0.elf
-	avr-objcopy  -j .text -j .data -O ihex lab0.elf lab0.hex
-	avr-size lab0.elf
+tic_tac_toe.hex: tic_tac_toe.elf
+	avr-objcopy  -j .text -j .data -O ihex tic_tac_toe.elf tic_tac_toe.hex
+	avr-size tic_tac_toe.elf
 
 clean:
-	rm -rf lab0.elf lab0.hex
+	rm -rf tic_tac_toe.elf tic_tac_toe.hex
