@@ -63,6 +63,44 @@ Position getPressedButton() {
 
 }
 
+void lightLEDs (int color) {
+
+	int i, j;
+	
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < N; j++) {
+			char port_led;
+			int pin;
+			
+			if (color == LROSII) {
+				port_led = led_rosii_port[i][j];
+				pin = led_rosii[i][j];
+			}
+			else if (color == LVERZI) {
+				port_led = led_verzi_port[i][j];
+				pin = led_verzi[i][j];
+			}
+			
+			switch (port_led) {
+				case 'a': {
+					PORTA |= (1 << pin);
+					break;
+				}
+				case 'b': {
+					PORTB |= (1 << pin);
+					break;
+				}
+				case 'c': {
+					PORTC |= (1 << pin);
+					break;
+				}
+			}
+			_delay_ms(1000);
+		}
+	}
+
+}
+
 /**
 	Gaseste pozitia pin-ului pin in matricea specificata
 */
@@ -160,7 +198,6 @@ void init () {
 	DDRB |= (1 << PB0);
 	DDRB |= (1 << PB1);
 	DDRB |= (1 << PB2);
-	
 
 	/* oprire LED-uri */
 	PORTC &= ~(1 << PC1);
@@ -187,7 +224,9 @@ void init () {
 void start() {
 	
 	init();
+	lightLEDs(LROSII);
 	
+/*
 	while (1) {
 		Position pos = getPressedButton();
 		
@@ -208,8 +247,8 @@ void start() {
 				break;
 			}
 		}
-
 	}
+*/
 
 }
 
