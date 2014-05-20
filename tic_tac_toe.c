@@ -16,6 +16,10 @@
 #define PLAY_WITH_HUMAN 0
 #define PLAY_WITH_BOT 2
 
+#define X_MARK 11
+#define ZERO_MARK 23
+#define EMPTY_MARK 54
+
 int led_verzi[N][N] = {{PC4, PC6, PA7}, {PB2, PB0, PC2}, {PA0, PA2, PA4}};
 char led_verzi_port[N][N] = {{'c', 'c', 'a'}, {'b', 'b', 'c'}, {'a', 'a', 'a'}};
 int led_rosii[N][N] = {{PC5, PC7, PA6}, {PB1, PC1, PC3}, {PA1, PA3, PA5}};
@@ -179,24 +183,440 @@ void loadingWithLEDs (int color) {
 
 }
 
-void start() {
+int isEmpty (int board[N][N], Position pos) {
 
-	init();
-	loadingWithLEDs(LVERZI);
-	Position pos = getPressedButton();
-	if (pos.col == PLAY_WITH_HUMAN) {
-		loadingWithLEDs(LVERZI);
+	if (board[pos.line][pos.col] == EMPTY_MARK) {
+		return 1;
 	}
-	else if (pos.col == PLAY_WITH_BOT) {
-		loadingWithLEDs(LROSII);
+	
+	return 0;
+
+}
+
+int isGameOver (int board[N][N]) {
+
+	int i, j;
+	int nrX, nr0;
+		
+	nrX = nr0 = 0;
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < N; j++) {
+			if (board[i][j] == ZERO_MARK) {
+				nr0++;
+			}
+			if (board[i][j] == X_MARK) {
+				nrX++;
+			}
+		}
+		if (nr0 == N || nrX == N) {
+			return 1;
+		}
+		nrX = nr0 = 0;
 	}
+	
+	nrX = nr0 = 0;
+	for (j = 0; j < N; j++) {
+		for (i = 0; i < N; i++) {
+			if (board[i][j] == ZERO_MARK) {
+				nr0++;
+			}
+			if (board[i][j] == X_MARK) {
+				nrX++;
+			}
+		}
+		if (nr0 == N || nrX == N) {
+			return 1;
+		}
+		nrX = nr0 = 0;
+	}
+	
+	nrX = nr0 = 0;
+	for (j = 0; j < N; j++) {
+		for (i = 0; i < N; i++) {
+			if (i + j == 2) {
+				if (board[i][j] == ZERO_MARK) {
+					nr0++;
+				}
+				if (board[i][j] == X_MARK) {
+					nrX++;
+				}
+			}
+		}		
+	}
+	if (nr0 == N || nrX == N) {
+		return 1;
+	}
+	
+	nrX = nr0 = 0;
+	for (i = 0; i < N; i++) {
+		if (board[i][i] == ZERO_MARK) {
+			nr0++;
+		}
+		if (board[i][i] == X_MARK) {
+			nrX++;
+		}
+	}
+	if (nr0 == N || nrX == N) {
+		return 1;
+	}
+
+	return 0;
+
+}
+
+Position getBotMove (int board[N][N]) {
+	/*
+		It is supposed that bot plays with 0
+	*/
+	Position pos;
+	int i, j;
+	int nrX, nr0;
+	int critical; // critical means that there are 2 X on a line
+	int potential; // it means that there is one 0 on a line and no X
+	int leastChoice;
+	critical = potential = leastChoice = 0;
+	Position emptyPos;
+		
+	nrX = nr0 = 0;
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < N; j++) {
+			if (board[i][j] == ZERO_MARK) {
+				nr0++;
+			}
+			if (board[i][j] == X_MARK) {
+				nrX++;
+			}
+			if (board[i][j] == EMPTY_MARK) {
+				emptyPos.line = i;
+				emptyPos.col = j;
+			}
+		}
+		if (nr0 == 2 && nrX == 0) {
+			// winning position, must move here
+			pos.line = emptyPos.line;
+			pos.col = emptyPos.col;
+			return pos;
+		}
+		if (nrX == 2 && nr0 == 0) {
+			pos.line = emptyPos.line;
+			pos.col = emptyPos.col;
+			critical = 1;
+		}
+		if (nrX == 0 && nr0 == 1 && critical == 0) {
+			pos.line = emptyPos.line;
+			pos.col = emptyPos.col;
+			potential = 1;
+		}
+		if (nrX == 1 && nr0 == 0 && critical == 0 && potential == 0) {
+			pos.line = emptyPos.line;
+			pos.col = emptyPos.col;
+			leastChoice = 1;
+		}
+		if (critical == 0 && potential == 0 && leastChoice == 0) {
+			pos.line = emptyPos.line;
+			pos.col = emptyPos.col;
+		}
+		nrX = nr0 = 0;
+	}
+	
+	nrX = nr0 = 0;
+	for (j = 0; j < N; j++) {
+		for (i = 0; i < N; i++) {
+			if (board[i][j] == ZERO_MARK) {
+				nr0++;
+			}
+			if (board[i][j] == X_MARK) {
+				nrX++;
+			}
+			if (board[i][j] == EMPTY_MARK) {
+				emptyPos.line = i;
+				emptyPos.col = j;
+			}
+		}
+		if (nr0 == 2 && nrX == 0) {
+			// winning position, must move here
+			pos.line = emptyPos.line;
+			pos.col = emptyPos.col;
+			return pos;
+		}
+		if (nrX == 2 && nr0 == 0) {
+			pos.line = emptyPos.line;
+			pos.col = emptyPos.col;
+			critical = 1;
+		}
+		if (nrX == 0 && nr0 == 1 && critical == 0) {
+			pos.line = emptyPos.line;
+			pos.col = emptyPos.col;
+			potential = 1;
+		}
+		if (nrX == 1 && nr0 == 0 && critical == 0 && potential == 0) {
+			pos.line = emptyPos.line;
+			pos.col = emptyPos.col;
+			leastChoice = 1;
+		}
+		if (critical == 0 && potential == 0 && leastChoice == 0) {
+			pos.line = emptyPos.line;
+			pos.col = emptyPos.col;
+		}
+		nrX = nr0 = 0;
+	}
+	
+	nrX = nr0 = 0;
+	for (j = 0; j < N; j++) {
+		for (i = 0; i < N; i++) {
+			if (i + j == 2) {
+				if (board[i][j] == ZERO_MARK) {
+					nr0++;
+				}
+				if (board[i][j] == X_MARK) {
+					nrX++;
+				}
+				if (board[i][j] == EMPTY_MARK) {
+					emptyPos.line = i;
+					emptyPos.col = j;
+				}
+			}
+		}		
+	}
+	if (nr0 == 2 && nrX == 0) {
+		// winning position, must move here
+		pos.line = emptyPos.line;
+		pos.col = emptyPos.col;
+		return pos;
+	}
+	if (nrX == 2 && nr0 == 0) {
+		pos.line = emptyPos.line;
+		pos.col = emptyPos.col;
+		critical = 1;
+	}
+	if (nrX == 0 && nr0 == 1 && critical == 0) {
+		pos.line = emptyPos.line;
+		pos.col = emptyPos.col;
+		potential = 1;
+	}
+	if (nrX == 1 && nr0 == 0 && critical == 0 && potential == 0) {
+		pos.line = emptyPos.line;
+		pos.col = emptyPos.col;
+		leastChoice = 1;
+	}
+	if (critical == 0 && potential == 0 && leastChoice == 0) {
+		pos.line = emptyPos.line;
+		pos.col = emptyPos.col;
+	}
+	
+	nrX = nr0 = 0;
+	for (i = 0; i < N; i++) {
+		if (board[i][i] == ZERO_MARK) {
+			nr0++;
+		}
+		if (board[i][i] == X_MARK) {
+			nrX++;
+		}
+		if (board[i][i] == EMPTY_MARK) {
+			emptyPos.line = i;
+			emptyPos.col = i;
+		}
+	}
+	if (nr0 == 2 && nrX == 0) {
+		// winning position, must move here
+		pos.line = emptyPos.line;
+		pos.col = emptyPos.col;
+		return pos;
+	}
+	if (nrX == 2 && nr0 == 0) {
+		pos.line = emptyPos.line;
+		pos.col = emptyPos.col;
+		critical = 1;
+	}
+	if (nrX == 0 && nr0 == 1 && critical == 0) {
+		pos.line = emptyPos.line;
+		pos.col = emptyPos.col;
+		potential = 1;
+	}
+	if (nrX == 1 && nr0 == 0 && critical == 0 && potential == 0) {
+		pos.line = emptyPos.line;
+		pos.col = emptyPos.col;
+		leastChoice = 1;
+	}
+	if (critical == 0 && potential == 0 && leastChoice == 0) {
+		pos.line = emptyPos.line;
+		pos.col = emptyPos.col;
+	}
+	
+	return pos;
+
+}
+
+void playWithHuman () {
+
+	int board[N][N];
+	int i, j;
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < N; j++) {
+			board[i][j] = EMPTY_MARK;
+		}
+	}
+	Position pos;
+	char port_led;
+	int pin;
 
 	while (1) {
 		pos = getPressedButton();
+		while (!isEmpty(board, pos)) {
+			pos = getPressedButton();
+		}
 		
-		char port_led = led_verzi_port[pos.line][pos.col];
-		int pin = led_verzi[pos.line][pos.col];
+		port_led = led_rosii_port[pos.line][pos.col];
+		pin = led_rosii[pos.line][pos.col];
 		
+		switch (port_led) {
+			case 'a': {
+				PORTA |= (1 << pin);
+				break;
+			}
+			case 'b': {
+				PORTB |= (1 << pin);
+				break;
+			}
+			case 'c': {
+				PORTC |= (1 << pin);
+				break;
+			}
+		}
+		
+		board[pos.line][pos.col] = X_MARK;
+		
+		if (isGameOver(board)) {
+			return;
+		}
+		
+		pos = getPressedButton();
+		while (!isEmpty(board, pos)) {
+			pos = getPressedButton();
+		}
+		
+		port_led = led_verzi_port[pos.line][pos.col];
+		pin = led_verzi[pos.line][pos.col];
+		
+		switch (port_led) {
+			case 'a': {
+				PORTA |= (1 << pin);
+				break;
+			}
+			case 'b': {
+				PORTB |= (1 << pin);
+				break;
+			}
+			case 'c': {
+				PORTC |= (1 << pin);
+				break;
+			}
+		}
+		
+		board[pos.line][pos.col] = ZERO_MARK;
+		
+		if (isGameOver(board)) {
+			return;
+		}
+		
+	}
+
+}
+
+void playWithBot () {
+
+	int board[N][N];
+	int i, j;
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < N; j++) {
+			board[i][j] = EMPTY_MARK;
+		}
+	}
+	Position pos;
+	char port_led;
+	int pin;
+
+	while (1) {
+		pos = getPressedButton();
+		while (!isEmpty(board, pos)) {
+			pos = getPressedButton();
+		}
+		
+		port_led = led_rosii_port[pos.line][pos.col];
+		pin = led_rosii[pos.line][pos.col];
+		
+		switch (port_led) {
+			case 'a': {
+				PORTA |= (1 << pin);
+				break;
+			}
+			case 'b': {
+				PORTB |= (1 << pin);
+				break;
+			}
+			case 'c': {
+				PORTC |= (1 << pin);
+				break;
+			}
+		}
+		
+		board[pos.line][pos.col] = X_MARK;
+		
+		if (isGameOver(board)) {
+			return;
+		}
+		
+		_delay_ms(444);
+		
+		pos = getBotMove(board);
+		
+		port_led = led_verzi_port[pos.line][pos.col];
+		pin = led_verzi[pos.line][pos.col];
+		
+		switch (port_led) {
+			case 'a': {
+				PORTA |= (1 << pin);
+				break;
+			}
+			case 'b': {
+				PORTB |= (1 << pin);
+				break;
+			}
+			case 'c': {
+				PORTC |= (1 << pin);
+				break;
+			}
+		}
+		
+		board[pos.line][pos.col] = ZERO_MARK;
+		
+		if (isGameOver(board)) {
+			return;
+		}
+		
+	}
+
+}
+
+void start() {
+
+	init();
+
+	Position pos = getPressedButton();
+	if (pos.col == PLAY_WITH_HUMAN) {
+		loadingWithLEDs(LVERZI);
+		playWithHuman();
+	}
+	else if (pos.col == PLAY_WITH_BOT) {
+		loadingWithLEDs(LROSII);
+		playWithBot();
+	}
+	else {
+		loadingWithLEDs(LVERZI);
+		loadingWithLEDs(LROSII);
+
+		int port_led = led_rosii_port[pos.line][pos.col];
+		int pin = led_rosii[pos.line][pos.col];
 		switch (port_led) {
 			case 'a': {
 				PORTA |= (1 << pin);
