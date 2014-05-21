@@ -276,15 +276,18 @@ Position getBotMove (int board[N][N]) {
 	int leastChoice;
 	critical = potential = leastChoice = 0;
 	Position emptyPos;
-		
+	int count = 0;
+
 	nrX = nr0 = 0;
 	for (i = 0; i < N; i++) {
 		for (j = 0; j < N; j++) {
 			if (board[i][j] == ZERO_MARK) {
 				nr0++;
+				count++;
 			}
 			if (board[i][j] == X_MARK) {
 				nrX++;
+				count++;
 			}
 			if (board[i][j] == EMPTY_MARK) {
 				emptyPos.line = i;
@@ -317,6 +320,12 @@ Position getBotMove (int board[N][N]) {
 			pos.col = emptyPos.col;
 		}
 		nrX = nr0 = 0;
+	}
+	
+	if (count == 1 && board[1][1] == EMPTY_MARK) {
+		pos.line = 1;
+		pos.col = 1;
+		return pos;
 	}
 	
 	nrX = nr0 = 0;
