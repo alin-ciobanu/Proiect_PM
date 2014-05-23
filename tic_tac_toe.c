@@ -264,6 +264,33 @@ int isGameOver (int board[N][N]) {
 
 }
 
+int isCorner (int board[N][N], Position pos) {
+	int i = pos.line;
+	int j = pos.col;
+	
+	if ((i == 0 && j == 0) || (i == 0 && j == N - 1) || 
+		(i == N - 1 && j == 0) || (i == N - 1 && j == N - 1)) {
+		return 1;
+	}
+	return 0;
+}
+
+int isOpponent2Corners (int board[N][N], Position pos[], int n) {
+
+	int i;
+	int c = 0;
+	for (i = 0; i < n; i++) {
+		if (isCorner(board, pos[i])) {
+			c++;
+		}
+	}
+	if (c == 2) {
+		return 1;
+	}
+	return 0;
+
+}
+
 Position getBotMove (int board[N][N]) {
 	/*
 		It is supposed that bot plays with 0
@@ -277,6 +304,8 @@ Position getBotMove (int board[N][N]) {
 	critical = potential = leastChoice = 0;
 	Position emptyPos;
 	int count = 0;
+	Position opponent_pos[N * N];
+	int n = 0;
 
 	nrX = nr0 = 0;
 	for (i = 0; i < N; i++) {
@@ -288,6 +317,10 @@ Position getBotMove (int board[N][N]) {
 			if (board[i][j] == X_MARK) {
 				nrX++;
 				count++;
+				Position pos_op;
+				pos_op.line = i;
+				pos_op.col = j;
+				opponent_pos[n++] = pos_op;
 			}
 			if (board[i][j] == EMPTY_MARK) {
 				emptyPos.line = i;
@@ -326,6 +359,15 @@ Position getBotMove (int board[N][N]) {
 		pos.line = 1;
 		pos.col = 1;
 		return pos;
+	}
+	
+	if (count == 3) {
+		// ugly hardcoded solution for stupid bot
+		if (isOpponent2Corners(board, opponent_pos, n)) {
+			pos.line = 0;
+			pos.col = 1;
+			return pos;
+		}
 	}
 	
 	nrX = nr0 = 0;
@@ -451,7 +493,7 @@ Position getBotMove (int board[N][N]) {
 		pos.line = emptyPos.line;
 		pos.col = emptyPos.col;
 	}
-	
+
 	return pos;
 
 }
