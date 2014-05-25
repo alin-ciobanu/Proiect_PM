@@ -7,6 +7,7 @@
 #include <avr/io.h>
 #define F_CPU 16000000
 #include <util/delay.h>
+#include <stdlib.h>
 
 #define N 3
 #define LVERZI 11
@@ -19,6 +20,8 @@
 #define X_MARK 11
 #define ZERO_MARK 23
 #define EMPTY_MARK 54
+
+#define INFINITY 9999
 
 int led_verzi[N][N] = {{PC4, PC6, PA7}, {PB2, PB0, PC2}, {PA0, PA2, PA4}};
 char led_verzi_port[N][N] = {{'c', 'c', 'a'}, {'b', 'b', 'c'}, {'a', 'a', 'a'}};
@@ -34,66 +37,87 @@ typedef struct Position {
 
 void init () {
 
+	int i, j;
 	/* setare butoane ca intrare */
-	DDRD &= ~(1 << PD0);
-	DDRD &= ~(1 << PD1);
-	DDRC &= ~(1 << PC0);
-	DDRD &= ~(1 << PD4);
-	DDRD &= ~(1 << PD5);
-	DDRD &= ~(1 << PD6);
-	DDRD &= ~(1 << PD7);
-	DDRB &= ~(1 << PB3);
-	DDRB &= ~(1 << PB4);
 	/* activare rezistenta de pull-up pentru butoane */
-	PORTD |= (1 << PD0);
-	PORTD |= (1 << PD1);
-	PORTC |= (1 << PC0);
-	PORTD |= (1 << PD4);
-	PORTD |= (1 << PD5);
-	PORTD |= (1 << PD6);
-	PORTD |= (1 << PD7);
-	PORTB |= (1 << PB3);
-	PORTB |= (1 << PB4);
-
 	/* setare led-uri ca iesire */
-	DDRC |= (1 << PC1);
-	DDRC |= (1 << PC2);
-	DDRC |= (1 << PC3);
-	DDRC |= (1 << PC4);
-	DDRC |= (1 << PC5);
-	DDRC |= (1 << PC6);
-	DDRC |= (1 << PC7);
-	DDRA |= (1 << PA0);
-	DDRA |= (1 << PA1);
-	DDRA |= (1 << PA2);
-	DDRA |= (1 << PA3);
-	DDRA |= (1 << PA4);
-	DDRA |= (1 << PA5);
-	DDRA |= (1 << PA6);
-	DDRA |= (1 << PA7);
-	DDRB |= (1 << PB0);
-	DDRB |= (1 << PB1);
-	DDRB |= (1 << PB2);
-
 	/* oprire LED-uri */
-	PORTC &= ~(1 << PC1);
-	PORTC &= ~(1 << PC2);
-	PORTC &= ~(1 << PC3);
-	PORTC &= ~(1 << PC4);
-	PORTC &= ~(1 << PC5);
-	PORTC &= ~(1 << PC6);
-	PORTC &= ~(1 << PC7);
-	PORTA &= ~(1 << PA0);
-	PORTA &= ~(1 << PA1);
-	PORTA &= ~(1 << PA2);
-	PORTA &= ~(1 << PA3);
-	PORTA &= ~(1 << PA4);
-	PORTA &= ~(1 << PA5);
-	PORTA &= ~(1 << PA6);
-	PORTA &= ~(1 << PA7);
-	PORTB &= ~(1 << PB0);
-	PORTB &= ~(1 << PB1);
-	PORTB &= ~(1 << PB2);
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < N; j++) {
+			char ch = butoane_port[i][j];
+			int pin = butoane[i][j];
+			switch(ch) {
+				case 'b': {
+					DDRB &= ~(1 << pin);
+					PORTB |= (1 << pin);
+					break;
+				}
+				case 'c': {
+					DDRC &= ~(1 << pin);
+					PORTC |= (1 << pin);
+					break;
+				}
+				case 'd': {
+					DDRD &= ~(1 << pin);
+					PORTD |= (1 << pin);
+					break;
+				}
+			}
+			
+			ch = led_rosii_port[i][j];
+			pin = led_rosii[i][j];
+			
+			switch(ch) {
+				case 'a': {
+					DDRA |= (1 << pin);
+					PORTA &= ~(1 << pin);
+					break;
+				}
+				case 'b': {
+					DDRB |= (1 << pin);
+					PORTB &= ~(1 << pin);
+					break;
+				}
+				case 'c': {
+					DDRC |= (1 << pin);
+					PORTC &= ~(1 << pin);
+					break;
+				}
+				case 'd': {
+					DDRD |= (1 << pin);
+					PORTD &= ~(1 << pin);
+					break;
+				}
+			}
+			
+			ch = led_verzi_port[i][j];
+			pin = led_verzi[i][j];
+			
+			switch(ch) {
+				case 'a': {
+					DDRA |= (1 << pin);
+					PORTA &= ~(1 << pin);
+					break;
+				}
+				case 'b': {
+					DDRB |= (1 << pin);
+					PORTB &= ~(1 << pin);
+					break;
+				}
+				case 'c': {
+					DDRC |= (1 << pin);
+					PORTC &= ~(1 << pin);
+					break;
+				}
+				case 'd': {
+					DDRD |= (1 << pin);
+					PORTD &= ~(1 << pin);
+					break;
+				}
+			}
+			
+		}
+	}
 
 }
 
@@ -264,10 +288,171 @@ int isGameOver (int board[N][N]) {
 
 }
 
+void getEmptyPositions (int board[N][N], Position* positions, int* n) {
+
+	int i, j;
+	*n = 0;
+	
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < N; j++) {
+			if (board[i][j] == EMPTY_MARK) {
+				positions[*n].line = i;
+				positions[*n].col = j;
+				(*n)++;
+			}
+		}
+	}
+}
+
+int boardCount(int board[N][N]) {
+
+	int i, j;
+	int count = 0;
+	
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < N; j++) {
+			if (board[i][j] == EMPTY_MARK) {
+				count++;
+			}
+		}
+	}
+	
+	return count;
+
+}
+
+int getScoreForLine (int board[N][N], int nrX, int nr0) {
+	int score = 0;
+	if (nr0 == 3) {
+		return INFINITY;
+	}
+	if (nr0 == 2 && nrX == 0) {
+		score += 0;
+	}
+	if (nr0 == 1 && nrX == 0) {
+		score += 0;
+	}
+	if (nr0 == 0 && nrX == 1) {
+		score += 0;
+	}
+	if (nrX == 2 && nr0 == 0) {
+		score -= 1000;
+	}
+	if (nrX == 1 && nr0 == 1) {
+		score += 0;
+	}
+	if (nrX == 2 && nr0 == 1) {
+		score += 100;
+	}
+	if (nr0 == 2 && nrX == 1) {
+		score -= 0;
+	}
+	return score;
+}
+
+int evaluateBoard(int board[N][N]) {
+
+	int i, j;
+	int nrX, nr0;
+	int score = 0;
+
+	nrX = nr0 = 0;
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < N; j++) {
+			if (board[i][j] == ZERO_MARK) {
+				nr0++;
+			}
+			if (board[i][j] == X_MARK) {
+				nrX++;
+			}
+		}
+		int lineScore = getScoreForLine(board, nrX, nr0);
+		if (lineScore == INFINITY) {
+			return INFINITY;
+		}
+		score += lineScore;
+		nrX = nr0 = 0;
+	}
+
+	nrX = nr0 = 0;
+	for (j = 0; j < N; j++) {
+		for (i = 0; i < N; i++) {
+			if (board[i][j] == ZERO_MARK) {
+				nr0++;
+			}
+			if (board[i][j] == X_MARK) {
+				nrX++;
+			}
+		}
+		int lineScore = getScoreForLine(board, nrX, nr0);
+		if (lineScore == INFINITY) {
+			return INFINITY;
+		}
+		score += lineScore;
+		nrX = nr0 = 0;
+	}
+
+	nrX = nr0 = 0;
+	for (j = 0; j < N; j++) {
+		for (i = 0; i < N; i++) {
+			if (i + j == 2) {
+				if (board[i][j] == ZERO_MARK) {
+					nr0++;
+				}
+				if (board[i][j] == X_MARK) {
+					nrX++;
+				}
+			}
+		}		
+	}
+	int lineScore = getScoreForLine(board, nrX, nr0);
+	if (lineScore == INFINITY) {
+		return INFINITY;
+	}
+	score += lineScore;
+
+	nrX = nr0 = 0;
+	for (i = 0; i < N; i++) {
+		if (board[i][i] == ZERO_MARK) {
+			nr0++;
+		}
+		if (board[i][i] == X_MARK) {
+			nrX++;
+		}
+	}
+	lineScore = getScoreForLine(board, nrX, nr0);
+	if (lineScore == INFINITY) {
+		return INFINITY;
+	}
+	score += lineScore;
+
+}
+
+int isOpponent2OppositeCorners (int board[N][N], Position pos[], int n) {
+
+	int i;
+	int c = 0;
+	Position corners2[2];
+	int k = 0;
+	for (i = 0; i < n; i++) {
+		if (isCorner(board, pos[i])) {
+			c++;
+			corners2[k++] = pos[i];
+		}
+	}
+	int isOpCorners = (corners2[0].line != corners2[0].line) && (corners2[0].col != corners2[0].col) && 
+					(corners2[1].line != corners2[1].line) && (corners2[1].col != corners2[1].col);
+	if (c == 2 && isOpCorners) {
+		return 1;
+	}
+	return 0;
+
+}
+
 int isCorner (int board[N][N], Position pos) {
 	int i = pos.line;
 	int j = pos.col;
-	
+
 	if ((i == 0 && j == 0) || (i == 0 && j == N - 1) || 
 		(i == N - 1 && j == 0) || (i == N - 1 && j == N - 1)) {
 		return 1;
@@ -275,19 +460,40 @@ int isCorner (int board[N][N], Position pos) {
 	return 0;
 }
 
-int isOpponent2Corners (int board[N][N], Position pos[], int n) {
+Position getIntersectionOfOpponent(int board[N][N]) {
 
-	int i;
-	int c = 0;
-	for (i = 0; i < n; i++) {
-		if (isCorner(board, pos[i])) {
-			c++;
+	int i, j;
+	
+	Position pos[2];
+	int k = 0;
+	Position zero;
+	
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < N; j++) {
+			if (board[i][j] == X_MARK) {
+				pos[k].line = i;
+				pos[k].col = j;
+				k++;
+			}
+			if (board[i][j] == ZERO_MARK) {
+				zero.line = i;
+				zero.col = j;
+			}
 		}
 	}
-	if (c == 2) {
-		return 1;
+	
+	Position pos1;
+	pos1.line = pos[0].line;
+	pos1.col = pos[1].col;
+	
+	Position pos2;
+	pos2.line = pos[1].line;
+	pos2.col = pos[1].col;
+
+	if (pos1.line != zero.line && pos1.col != zero.col) {
+		return pos1;
 	}
-	return 0;
+	return pos2;
 
 }
 
@@ -354,22 +560,30 @@ Position getBotMove (int board[N][N]) {
 		}
 		nrX = nr0 = 0;
 	}
-	
+
 	if (count == 1 && board[1][1] == EMPTY_MARK) {
 		pos.line = 1;
 		pos.col = 1;
 		return pos;
 	}
-	
+
 	if (count == 3) {
 		// ugly hardcoded solution for stupid bot
-		if (isOpponent2Corners(board, opponent_pos, n)) {
+		if (isOpponent2OppositeCorners(board, opponent_pos, n)) {
 			pos.line = 0;
 			pos.col = 1;
 			return pos;
 		}
+		else {
+			Position inters = getIntersectionOfOpponent(board);
+			if (isEmpty(board, inters)) {
+				pos.line = inters.line;
+				pos.col = inters.col;
+				return pos;
+			}
+		}
 	}
-	
+
 	nrX = nr0 = 0;
 	for (j = 0; j < N; j++) {
 		for (i = 0; i < N; i++) {
@@ -411,7 +625,7 @@ Position getBotMove (int board[N][N]) {
 		}
 		nrX = nr0 = 0;
 	}
-	
+
 	nrX = nr0 = 0;
 	for (j = 0; j < N; j++) {
 		for (i = 0; i < N; i++) {
@@ -454,7 +668,7 @@ Position getBotMove (int board[N][N]) {
 		pos.line = emptyPos.line;
 		pos.col = emptyPos.col;
 	}
-	
+
 	nrX = nr0 = 0;
 	for (i = 0; i < N; i++) {
 		if (board[i][i] == ZERO_MARK) {
